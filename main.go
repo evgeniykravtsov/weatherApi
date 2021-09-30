@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -56,19 +57,31 @@ type Part struct {
 	FeelsLike float32  `json:"feels_like"`
 	WindSpeed float32 `json:"wind_speed"`
 }
+
+type Error struct {
+	Error string
+}
 func main() {
 	e := echo.New()
 	yandexApiKey := "6dfedf6f-1d92-4092-b8b7-46865ff715be"
 
 	e.GET("/getWeather", func(c echo.Context) error {
-		weather,_ := getWeather(yandexApiKey, "ru_RU", 55.75396, 37.620393)
-		return c.JSON(http.StatusOK, weather)
+		lat, errLat := strconv.ParseFloat(c.QueryParam("lat"), 64)
+		lon, errLon := strconv.ParseFloat(c.QueryParam("lon"), 64)
+
+		if errLat == nil && errLon ==nil {
+			weather,_ := getWeather(yandexApiKey, "ru_RU", lat, lon)
+			return c.JSON(http.StatusOK, weather)
+		} else {
+			err := Error{"Ошибка!"}
+			return c.JSON(http.StatusOK, err)
+		}
 	})
 	e.Logger.Fatal(e.Start(":1323"))
 }
 
 
-func getWeather(apiKey string, lang string, lat , lon float32) (Weather, error) {
+func getWeather(apiKey string, lang string, lat , lon float64) (Weather, error) {
 	url := fmt.Sprintf("https://api.weather.yandex.ru/v2/forecast?lat=%f&lon=%f&lang=%v", lat, lon, lang)
 
 	client := http.Client{}
