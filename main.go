@@ -69,15 +69,17 @@ func main() {
 	e := echo.New()
 	yandexApiKey := "6dfedf6f-1d92-4092-b8b7-46865ff715be"
 
-	e.GET("/getWeather", func(c echo.Context) error {
+	e.GET("/getTemperatureInfo", func(c echo.Context) error {
 		lat, errLat := strconv.ParseFloat(c.QueryParam("lat"), 64)
 		lon, errLon := strconv.ParseFloat(c.QueryParam("lon"), 64)
 
 		if errLat == nil && errLon ==nil {
 			weather,_ := getWeather(yandexApiKey, "ru_RU", lat, lon)
-				return c.JSON(http.StatusOK, InfoResponse{Text: getUserFriendlyTempInfo(weather.Fact.Temp)})
+				return c.JSON(
+					http.StatusOK,
+					InfoResponse{Text: getUserFriendlyTempInfo(weather.Fact.Temp, weather.Fact.FeelsLike)})
 		} else {
-			err := Error{"Ошибка!"}
+			err := Error{"Ошибка парсинга query lat/lan!"}
 			return c.JSON(http.StatusOK, err)
 		}
 	})
@@ -106,6 +108,6 @@ func getWeather(apiKey string, lang string, lat , lon float64) (Weather, error) 
 	return weather, nil
 }
 
-func getUserFriendlyTempInfo( temp float32) string {
-	return fmt.Sprintf("Фактическая температура %.1f по цельсию", temp)
+func getUserFriendlyTempInfo( temp float32, feelsLikeTemp float32) string {
+	return fmt.Sprintf("Фактическая температура %.1f по цельсию. Ощущается как %.1f", temp, feelsLikeTemp)
 }
