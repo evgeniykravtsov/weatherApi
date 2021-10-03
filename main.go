@@ -61,6 +61,10 @@ type Part struct {
 type Error struct {
 	Error string
 }
+
+type InfoResponse struct {
+	Text string
+}
 func main() {
 	e := echo.New()
 	yandexApiKey := "6dfedf6f-1d92-4092-b8b7-46865ff715be"
@@ -71,7 +75,7 @@ func main() {
 
 		if errLat == nil && errLon ==nil {
 			weather,_ := getWeather(yandexApiKey, "ru_RU", lat, lon)
-			return c.JSON(http.StatusOK, weather)
+				return c.JSON(http.StatusOK, InfoResponse{Text: getUserFriendlyTempInfo(weather.Fact.Temp)})
 		} else {
 			err := Error{"Ошибка!"}
 			return c.JSON(http.StatusOK, err)
@@ -98,7 +102,10 @@ func getWeather(apiKey string, lang string, lat , lon float64) (Weather, error) 
 
 	var weather Weather
 
-	_ = json.NewDecoder(resp.Body).Decode(&weather)
-
+	err = json.NewDecoder(resp.Body).Decode(&weather)
 	return weather, nil
+}
+
+func getUserFriendlyTempInfo( temp float32) string {
+	return fmt.Sprintf("Фактическая температура %.1f по цельсию", temp)
 }
